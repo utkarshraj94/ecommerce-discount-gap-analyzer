@@ -1,0 +1,55 @@
+{
+  "source_file": "myntra202305041052.csv",
+  "steps": [
+    {
+      "step": "Rows loaded",
+      "removed": 0,
+      "remaining": 1060213
+    },
+    {
+      "step": "Duplicate products (same product ID)",
+      "removed": 237241,
+      "remaining": 822972
+    },
+    {
+      "step": "Invalid prices",
+      "removed": 0,
+      "remaining": 822972
+    },
+    {
+      "step": "Extreme discounts (over 95%)",
+      "removed": 0,
+      "remaining": 822972
+    },
+    {
+      "step": "Outside the project's categories",
+      "removed": 787972,
+      "remaining": 35000
+    },
+    {
+      "step": "Set aside for gender or segment",
+      "removed": 16963,
+      "remaining": 18037
+    },
+    {
+      "step": "Rows kept",
+      "removed": 0,
+      "remaining": 18037
+    }
+  ],
+  "set_aside_detail": {
+    "kids": 5503,
+    "unknown_gender": 11456,
+    "no_segment": 4
+  },
+  "unrated_products": 12965,
+  "segment_sizes": {
+    "Men's Shirts": 1038,
+    "Women's Shirts": 1628,
+    "Men's Kurtas": 5851,
+    "Women's Kurtas": 6212,
+    "Women's Sneakers": 3308
+  },
+  "segments_below_minimum": [],
+  "prices_above_mrp": 0
+}
