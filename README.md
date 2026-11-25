@@ -225,7 +225,6 @@ ecommerce-discount-gap-analyzer/
 │   ├── Discount_Gap_Analyzer_deck.pptx  # Presentation deck
 │   └── images/                 # README screenshots and the workflow diagram
 ├── .streamlit/config.toml      # App theme
-├── .devcontainer/              # GitHub Codespaces setup
 ├── requirements.txt            # Packages the app needs (Streamlit Cloud)
 └── requirements-dev.txt        # Plus pipeline, tests and notebooks
 ```
