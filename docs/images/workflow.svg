@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="200" viewBox="0 0 920 200" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>Where this app fits: Find, Plan, Run, Measure, Decide</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#868E96"/>
+    </marker>
+  </defs>
+  <rect width="920" height="200" rx="12" fill="#FFFFFF"/>
+
+  <!-- Find -->
+  <rect x="20" y="40" width="152" height="120" rx="10" fill="#E3F9F8" stroke="#29CFCD" stroke-width="2"/>
+  <text x="96" y="64" text-anchor="middle" font-size="12" font-weight="600" fill="#0B7A78">THIS APP</text>
+  <text x="96" y="94" text-anchor="middle" font-size="22" font-weight="700" fill="#212529">Find</text>
+  <text x="96" y="122" text-anchor="middle" font-size="13" fill="#495057">Listings with a large</text>
+  <text x="96" y="140" text-anchor="middle" font-size="13" fill="#495057">gap to their peers</text>
+
+  <line x1="176" y1="100" x2="196" y2="100" stroke="#868E96" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Plan -->
+  <rect x="200" y="40" width="152" height="120" rx="10" fill="#E3F9F8" stroke="#29CFCD" stroke-width="2"/>
+  <text x="276" y="64" text-anchor="middle" font-size="12" font-weight="600" fill="#0B7A78">THIS APP</text>
+  <text x="276" y="94" text-anchor="middle" font-size="22" font-weight="700" fill="#212529">Plan</text>
+  <text x="276" y="122" text-anchor="middle" font-size="13" fill="#495057">Ranked shortlist,</text>
+  <text x="276" y="140" text-anchor="middle" font-size="13" fill="#495057">test discount, break-even</text>
+
+  <line x1="356" y1="100" x2="376" y2="100" stroke="#868E96" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Run -->
+  <rect x="380" y="40" width="152" height="120" rx="10" fill="#F1F3F5" stroke="#ADB5BD" stroke-width="2"/>
+  <text x="456" y="64" text-anchor="middle" font-size="12" font-weight="600" fill="#6C757D">OTHER TOOLS</text>
+  <text x="456" y="94" text-anchor="middle" font-size="22" font-weight="700" fill="#212529">Run</text>
+  <text x="456" y="122" text-anchor="middle" font-size="13" fill="#495057">Set the test discount</text>
+  <text x="456" y="140" text-anchor="middle" font-size="13" fill="#495057">and the A/B split</text>
+
+  <line x1="536" y1="100" x2="556" y2="100" stroke="#868E96" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Measure -->
+  <rect x="560" y="40" width="152" height="120" rx="10" fill="#F1F3F5" stroke="#ADB5BD" stroke-width="2"/>
+  <text x="636" y="64" text-anchor="middle" font-size="12" font-weight="600" fill="#6C757D">OTHER TOOLS</text>
+  <text x="636" y="94" text-anchor="middle" font-size="22" font-weight="700" fill="#212529">Measure</text>
+  <text x="636" y="122" text-anchor="middle" font-size="13" fill="#495057">Units and contribution</text>
+  <text x="636" y="140" text-anchor="middle" font-size="13" fill="#495057">for each group</text>
+
+  <line x1="716" y1="100" x2="736" y2="100" stroke="#868E96" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Decide -->
+  <rect x="740" y="40" width="160" height="120" rx="10" fill="#E3F9F8" stroke="#29CFCD" stroke-width="2"/>
+  <text x="820" y="64" text-anchor="middle" font-size="12" font-weight="600" fill="#0B7A78">THIS APP</text>
+  <text x="820" y="94" text-anchor="middle" font-size="22" font-weight="700" fill="#212529">Decide</text>
+  <text x="820" y="122" text-anchor="middle" font-size="13" fill="#495057">Win or loss against</text>
+  <text x="820" y="140" text-anchor="middle" font-size="13" fill="#495057">the break-even</text>
+
+  <text x="460" y="188" text-anchor="middle" font-size="12" fill="#6C757D">Other tools: Shopify discount apps and Functions, store or marketplace analytics</text>
+</svg>
