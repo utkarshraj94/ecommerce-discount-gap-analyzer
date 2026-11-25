@@ -5,8 +5,11 @@ from pathlib import Path
 import pandas as pd
 
 from src.business import MIN_GAP, MIN_GROUP_SIZE
+from src.features import NUMERIC
+from src.select_k import make_input
 
 CLEAN = Path("data/processed/clean_products.parquet")
+FEATURES = Path("data/processed/features.parquet")
 GROUPS = Path("data/processed/peer_groups.parquet")
 STATS = Path("data/processed/peer_stats.parquet")
 CANDIDATES = Path("data/processed/candidates.parquet")
@@ -57,7 +60,21 @@ def main():
         {"check": "Candidates to review first", "value": int((products["is_candidate"] & products["review_first"]).sum())},
     ])
 
-    # 5. Write every table to SQLite, replacing old versions
+    # 5. For placing a new product: each segment's scaling numbers and average rating,
+    #    and each peer group's centre (the mean of its listings' clustering inputs)
+    feat = pd.read_parquet(FEATURES).merge(groups[["product_id", "peer_group"]], on="product_id")
+    scaling = feat.groupby("segment")[NUMERIC].agg(["mean", "std"])
+    scaling.columns = [f"{col}_{stat}" for col, stat in scaling.columns]
+    scaling["avg_rating"] = clean.groupby("segment")["rating"].mean()
+    scaling = scaling.reset_index()
+    centres = []
+    for seg, group in feat.groupby("segment"):
+        centre = make_input(group).groupby(group["peer_group"]).mean().reset_index()
+        centre.insert(0, "segment", seg)
+        centres.append(centre)
+    centres = pd.concat(centres, ignore_index=True)
+
+    # 6. Write every table to SQLite, replacing old versions
     tables = {
         "app_products": products,
         "app_peer_groups": peer,
@@ -65,18 +82,20 @@ def main():
         "app_brands": brands,
         "app_data_quality": steps,
         "app_checks": checks,
+        "app_scaling": scaling,
+        "app_centres": centres,
     }
     conn = sqlite3.connect(OUT)
     for name, table in tables.items():
         table.to_sql(name, conn, if_exists="replace", index=False)
 
-    # 6. Read the row counts back from the file, then close it
+    # 7. Read the row counts back from the file, then close it
     for name in tables:
         n = pd.read_sql(f"SELECT COUNT(*) AS n FROM {name}", conn)["n"][0]
         print(name, n)
     conn.close()
 
-    # 7. Checks: file size, missing values per column, and two tables to look at
+    # 8. Checks: file size, missing values per column, and two tables to look at
     print("Saved", OUT, round(OUT.stat().st_size / 1e6, 1), "MB")
     missing = products.isna().sum()
     print("Columns with missing values:", missing[missing > 0].to_dict())

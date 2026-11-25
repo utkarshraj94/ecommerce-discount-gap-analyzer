@@ -4,8 +4,8 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from src.app_tabs import (brands, calculator, candidate_list, data_quality, lookup, overview,
-                          peer_groups, results)
+from src.app_tabs import (brands, calculator, candidate_list, check_product, data_quality, lookup,
+                          overview, peer_groups, results)
 from src.business import MIN_GAP
 
 DB_PATH = Path(__file__).parent / "data" / "processed" / "app.db"
@@ -15,6 +15,7 @@ TAB_NAMES = [
     ":material/groups: Peer groups",
     ":material/flag: Test candidates",
     ":material/search: Product lookup",
+    ":material/add_box: Check a product",
     ":material/sell: Brands",
     ":material/calculate: Calculator",
     ":material/science: Test results",
@@ -87,8 +88,8 @@ with st.container(horizontal=True):
               help=f"{share_flagged:.0f}% of the listings in this segment.")
     plan_card = st.empty()
 
-# 9. The eight tabs, one name each
-(overview_tab, peer_tab, candidates_tab, lookup_tab,
+# 9. The nine tabs, one name each
+(overview_tab, peer_tab, candidates_tab, lookup_tab, check_tab,
  brands_tab, calculator_tab, results_tab, quality_tab) = st.tabs(TAB_NAMES)
 
 # 10. Fill each tab
@@ -100,6 +101,10 @@ with candidates_tab:
     candidate_list.show(selected, products, segment, min_gap, fee_pct, cost_pct, shipping)
 with lookup_tab:
     lookup.show(selected, segment, min_gap, fee_pct, cost_pct, shipping)
+with check_tab:
+    tables = {"scaling": load_table("app_scaling"), "centres": load_table("app_centres"),
+              "peer_groups": load_table("app_peer_groups")}
+    check_product.show(products, tables, min_gap, fee_pct, cost_pct, shipping)
 with brands_tab:
     brands.show(selected, segment, min_gap)
 with calculator_tab:

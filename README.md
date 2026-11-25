@@ -43,6 +43,7 @@ Most discount tools help a seller **run** discounts and **measure** sales. This 
 | Peer groups | Each group's name, size and discount range (25th, 50th and 75th percentile) |
 | Test candidates | Ranked listings with a gap of 8+ points; tick rows to build a test plan and download it as CSV |
 | Product lookup | Search one product and see why it is or isn't flagged |
+| Check a product | Enter a product that isn't in the catalogue (or upload a CSV of several) to see its peer group, gap, test-candidate status and break-even |
 | Brands | Which brands discount above their peers most often |
 | Calculator | Contribution per unit and the break-even sales loss for a smaller discount |
 | Test results | Enter the A/B test numbers and get a win or loss against break-even |
@@ -59,10 +60,11 @@ The sidebar sets the segment, the minimum gap (default 8 points), the marketplac
 3. **Peer groups:** check what "similar products" means here: each group's name (price level, rating, product words) and its normal discount range.
 4. **Brands:** see which brands discount more than similar listings most often, and which less.
 5. **Product lookup:** search a product or brand to see why one listing is or isn't flagged, in one sentence.
-6. **Test candidates:** the list is ranked by gap, largest first. Tick **Plan** on the listings you want to test, then **Download test plan (CSV)**.
-7. **Calculator:** put in one product's MRP, current discount and test discount to see contribution per sale and the break-even sales loss.
-8. **Run the test** in your store or marketplace tools (see "The business test" below).
-9. **Test results:** enter units and contribution per unit for the control and test groups to get a win or loss against break-even.
+6. **Check a product:** for a product that isn't in the catalogue, such as a new launch, enter its name, segment, MRP, selling price and ratings. The app puts it in the peer group of the most similar listings and shows its gap, whether it's a test candidate, and the break-even if its discount moved to the peer median. To check many at once, download the template, fill it in and upload it.
+7. **Test candidates:** the list is ranked by gap, largest first. Tick **Plan** on the listings you want to test, then **Download test plan (CSV)**.
+8. **Calculator:** put in one product's MRP, current discount and test discount to see contribution per sale and the break-even sales loss.
+9. **Run the test** in your store or marketplace tools (see "The business test" below).
+10. **Test results:** enter units and contribution per unit for the control and test groups to get a win or loss against break-even.
 
 Hover over any chart point for a plain-language explanation, and open **What the words mean** under the title for the terms.
 
@@ -101,7 +103,8 @@ flowchart LR
 4. **Peer groups** (`src/select_k.py` to `src/peer_groups.py`): KMeans on each segment separately. **Discount, selling price and brand are left out** (MRP is kept), so a group means "similar product", not "similar discount".
 5. **Gaps and candidates** (`src/gaps.py`, `src/candidates.py`): gap = listing discount − peer median. A listing is a test candidate when the gap is 8 points or more. Groups under 100 listings are marked low confidence.
 6. **Business rules** (`src/business.py`, tested in `tests/test_business.py`): contribution per unit, break-even sales loss and the test result comparison.
-7. **App tables** (`src/app_tables.py`): one 7 MB `app.db` file that the app reads.
+7. **App tables** (`src/app_tables.py`): one 7 MB `app.db` file that the app reads. It also stores each segment's scaling numbers and each peer group's centre.
+8. **Placing new products** (`src/place_product.py`, tested in `tests/test_place_product.py`): a new product gets the same inputs as the clustering and joins the nearest peer-group centre in its segment, so no model is refitted. Run on all 18,037 catalogue listings, it puts every one back in its own group with the same gap.
 
 ## Model choice
 
