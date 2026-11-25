@@ -37,6 +37,14 @@ Most discount tools help a seller **run** discounts and **measure** sales. This 
 
 **What it doesn't do:** it doesn't change prices or run the test itself, and it has no live sales data. Those stay with the store or marketplace tools.
 
+## Key findings
+
+- **5,498 of 18,037 listings (30%)** discount at least 8 points more than their peer median.
+- A typical candidate gives **70% off where similar products give 55%**: a median gap of 15 points.
+- **Women's Sneakers** has the highest share flagged (39%) even though it has the lowest median discount (40%), so whether a discount is high depends on the category.
+- Some brands discount above their peers on almost every listing: for example, AfroJack, El Paso, Indian Fashionista and Oxolloxo have every one of their 50+ listings flagged.
+- 8 of the 35 peer groups have under 100 listings, so their candidates are marked low confidence.
+
 ## What the app does
 
 | Tab | What it shows |
@@ -86,6 +94,90 @@ Hover over any chart point for a plain-language explanation, and open **What the
 
 **What the team gets:** a short, ranked, explained list instead of a blanket discount cut; a break-even number agreed before the test; and a clear rule for reading the result.
 
+## The business test
+
+The app finds **where** to test; it does not prove a profit gain. A large gap is a signal, not proof: the discount may be clearing old stock, matching a competitor, or driving most of that product's sales. The only way to know whether shoppers still buy at a smaller discount is a controlled A/B test.
+
+### The trade-off being tested
+
+A smaller discount earns more on every sale but may sell fewer units. The **break-even sales loss** is how far units can fall before total profit drops. In the Calculator's default example (MRP ₹1,000, discount cut from 40% to 30%), contribution per sale rises from ₹250 to ₹330, so units can fall by up to 24.2% and the brand still earns more.
+
+![Calculator tab](docs/images/calculator.png)
+
+### Test design
+
+| Part | Design | Why |
+|---|---|---|
+| Shortlist | 50 to 100 candidates from one segment, high-confidence peer groups only, nothing marked "review first"; CSV from the Test candidates tab | Enough products for a clear result, without unusual listings blurring it |
+| Change | The test group moves to its peer median discount; the control group keeps today's discount | The peer median is a level similar products already sell at, so the new price is realistic, not a guess |
+| Split | Shoppers split 50/50 at random; or, if showing two prices for one product isn't acceptable, half the listings in each peer group are test and half control | Every product keeps one price, and the peer groups keep the two halves comparable |
+| Duration | 2 to 4 weeks, outside big sale events | Covers weekday, weekend and payday patterns; a sale would distort both groups |
+| Main metric | Total contribution = units × contribution per unit | Units almost always fall when the discount shrinks; the question is whether profit rises |
+| Guardrails | Return rate, search rank and visibility, customer complaints | A profit gain that damages ranking or customer trust isn't a real win |
+| Win rule | Units fall by less than the break-even sales loss, fixed before the test starts | Fixing the rule in advance stops the result being read the way people hope |
+
+### Reading the result (illustrative numbers)
+
+A brand tests 60 Women's Sneakers listings at their peer median for 3 weeks. Contribution per unit rises from ₹100 to ₹140, so the break-even sales loss is 28.6%.
+
+| Outcome | Units | Total contribution | Decision |
+|---|---:|---:|---|
+| Before | 1,000 | ₹1,00,000 | |
+| Units fall 15% | 850 | ₹1,19,000 (+19%) | Win: roll the smaller discount out to the rest of the peer group |
+| Units fall 35% | 650 | ₹91,000 (−9%) | Loss: keep the old discount; the gap was earning its sales |
+
+The Test results tab does this comparison: enter units and contribution per unit for both groups, and it shows the change against break-even with a win or loss message. Before acting on a small difference, check it's larger than normal week-to-week swings in the control group, or run the test longer.
+
+**Either way the brand learns something:** a win frees margin across similar listings; a loss shows that the discount is what sells those products, which is worth knowing before cutting it anywhere else.
+
+**Status:** designed and ready to run, but not run, because the public data has no sales and I can't change Myntra's prices.
+
+## Data
+
+- **Source:** [Myntra Products Dataset](https://www.kaggle.com/datasets/ronakbokaria/myntra-products-dataset) on Kaggle (`myntra202305041052.csv`, 1.37 GB, 1,060,213 rows).
+- **Snapshot date:** last updated 4 May 2023, so prices are a past snapshot, not today's.
+- **Licence:** CC0 Public Domain.
+- **Kept:** 18,037 listings after removing 237,241 duplicate product IDs, 787,972 rows outside the 5 categories, and 16,963 kids' or unknown-gender rows.
+
+The raw file is not in this repository (it is too big); `data/processed/app.db` is.
+
+## How it works
+
+```mermaid
+flowchart LR
+    A[Raw CSV<br>1,060,213 rows] --> B[Clean<br>18,037 listings]
+    B --> C[SQLite<br>star schema]
+    C --> D[Features<br>MRP, rating, text flags]
+    D --> E[KMeans peer groups<br>35 groups]
+    E --> F[Gap = discount minus<br>peer median]
+    F --> G[Candidates and<br>break-even]
+    G --> H[Streamlit app]
+```
+
+1. **Clean** (`src/clean.py`): remove duplicate product IDs, keep 5 segments (Men's and Women's Kurtas, Men's and Women's Shirts, Women's Sneakers), add gender from the product link.
+2. **SQL layer** (`sql/schema.sql`, `src/load_db.py`): a small star schema (`dim_brand`, `dim_category`, `fact_listing`) with CHECK and foreign-key rules; reusable queries in `sql/metrics.sql`.
+3. **Features** (`src/features.py`): scaled MRP (list price), rating and rating count, a has-rating flag and ten text flags from the product name (for example cotton, embroidered, solid).
+4. **Peer groups** (`src/select_k.py` to `src/peer_groups.py`): KMeans on each segment separately. **Discount, selling price and brand are left out** (MRP is kept), so a group means "similar product", not "similar discount".
+5. **Gaps and candidates** (`src/gaps.py`, `src/candidates.py`): gap = listing discount − peer median. A listing is a test candidate when the gap is 8 points or more. Groups under 100 listings are marked low confidence.
+6. **Business rules** (`src/business.py`, tested in `tests/test_business.py`): contribution per unit, break-even sales loss and the test result comparison.
+7. **App tables** (`src/app_tables.py`): one 7 MB `app.db` file that the app reads. It also stores each segment's scaling numbers and each peer group's centre.
+8. **Placing new products** (`src/place_product.py`, tested in `tests/test_place_product.py`): a new product gets the same inputs as the clustering and joins the nearest peer-group centre in its segment, so no model is refitted. Run on all 18,037 catalogue listings, it puts every one back in its own group with the same gap.
+
+## Model choice
+
+- **KMeans, one model per segment.** k was chosen from 3 to 10 with two rules (no group over 40% of its segment, none under 30 listings), then by silhouette score and a 5-seed stability check. Final k: 4 to 10 per segment; stability (adjusted Rand index) 0.90 to 1.00.
+- **MiniBatchKMeans was dropped.** It gave stability of only 0.48 to 0.67 on segments of a few thousand rows; plain KMeans gave up to 1.00.
+- **HDBSCAN was compared and not used.** It left 15% to 56% of listings in no cluster (every listing needs a peer group to get a gap), found between 5 and 56 clusters, agreed poorly with KMeans (0.08 to 0.48), and changed a lot with its main setting.
+- **Isolation Forest** flags unusual listings, which are marked "review first" instead of being dropped.
+
+| Segment | Listings | Peer groups | Median discount | Test candidates |
+|---|---:|---:|---:|---:|
+| Men's Kurtas | 5,851 | 4 | 60% | 1,440 (25%) |
+| Women's Kurtas | 6,212 | 6 | 57% | 1,862 (30%) |
+| Women's Sneakers | 3,308 | 6 | 40% | 1,297 (39%) |
+| Women's Shirts | 1,628 | 10 | 50% | 532 (33%) |
+| Men's Shirts | 1,038 | 9 | 50% | 367 (35%) |
+
 ## Repository structure
 
 ```
@@ -129,106 +221,6 @@ ecommerce-discount-gap-analyzer/
 └── requirements-dev.txt        # Plus pipeline, tests and notebooks
 ```
 
-## How it works
-
-```mermaid
-flowchart LR
-    A[Raw CSV<br>1,060,213 rows] --> B[Clean<br>18,037 listings]
-    B --> C[SQLite<br>star schema]
-    C --> D[Features<br>MRP, rating, text flags]
-    D --> E[KMeans peer groups<br>35 groups]
-    E --> F[Gap = discount minus<br>peer median]
-    F --> G[Candidates and<br>break-even]
-    G --> H[Streamlit app]
-```
-
-1. **Clean** (`src/clean.py`): remove duplicate product IDs, keep 5 segments (Men's and Women's Kurtas, Men's and Women's Shirts, Women's Sneakers), add gender from the product link.
-2. **SQL layer** (`sql/schema.sql`, `src/load_db.py`): a small star schema (`dim_brand`, `dim_category`, `fact_listing`) with CHECK and foreign-key rules; reusable queries in `sql/metrics.sql`.
-3. **Features** (`src/features.py`): scaled MRP (list price), rating and rating count, a has-rating flag and ten text flags from the product name (for example cotton, embroidered, solid).
-4. **Peer groups** (`src/select_k.py` to `src/peer_groups.py`): KMeans on each segment separately. **Discount, selling price and brand are left out** (MRP is kept), so a group means "similar product", not "similar discount".
-5. **Gaps and candidates** (`src/gaps.py`, `src/candidates.py`): gap = listing discount − peer median. A listing is a test candidate when the gap is 8 points or more. Groups under 100 listings are marked low confidence.
-6. **Business rules** (`src/business.py`, tested in `tests/test_business.py`): contribution per unit, break-even sales loss and the test result comparison.
-7. **App tables** (`src/app_tables.py`): one 7 MB `app.db` file that the app reads. It also stores each segment's scaling numbers and each peer group's centre.
-8. **Placing new products** (`src/place_product.py`, tested in `tests/test_place_product.py`): a new product gets the same inputs as the clustering and joins the nearest peer-group centre in its segment, so no model is refitted. Run on all 18,037 catalogue listings, it puts every one back in its own group with the same gap.
-
-## Model choice
-
-- **KMeans, one model per segment.** k was chosen from 3 to 10 with two rules (no group over 40% of its segment, none under 30 listings), then by silhouette score and a 5-seed stability check. Final k: 4 to 10 per segment; stability (adjusted Rand index) 0.90 to 1.00.
-- **MiniBatchKMeans was dropped.** It gave stability of only 0.48 to 0.67 on segments of a few thousand rows; plain KMeans gave up to 1.00.
-- **HDBSCAN was compared and not used.** It left 15% to 56% of listings in no cluster (every listing needs a peer group to get a gap), found between 5 and 56 clusters, agreed poorly with KMeans (0.08 to 0.48), and changed a lot with its main setting.
-- **Isolation Forest** flags unusual listings, which are marked "review first" instead of being dropped.
-
-| Segment | Listings | Peer groups | Median discount | Test candidates |
-|---|---:|---:|---:|---:|
-| Men's Kurtas | 5,851 | 4 | 60% | 1,440 (25%) |
-| Women's Kurtas | 6,212 | 6 | 57% | 1,862 (30%) |
-| Women's Sneakers | 3,308 | 6 | 40% | 1,297 (39%) |
-| Women's Shirts | 1,628 | 10 | 50% | 532 (33%) |
-| Men's Shirts | 1,038 | 9 | 50% | 367 (35%) |
-
-## Key findings
-
-- **5,498 of 18,037 listings (30%)** discount at least 8 points more than their peer median.
-- A typical candidate gives **70% off where similar products give 55%**: a median gap of 15 points.
-- **Women's Sneakers** has the highest share flagged (39%) even though it has the lowest median discount (40%), so whether a discount is high depends on the category.
-- Some brands discount above their peers on almost every listing: for example, AfroJack, El Paso, Indian Fashionista and Oxolloxo have every one of their 50+ listings flagged.
-- 8 of the 35 peer groups have under 100 listings, so their candidates are marked low confidence.
-
-![Calculator tab](docs/images/calculator.png)
-
-## The business test
-
-The app finds **where** to test; it does not prove a profit gain. A large gap is a signal, not proof: the discount may be clearing old stock, matching a competitor, or driving most of that product's sales. The only way to know whether shoppers still buy at a smaller discount is a controlled A/B test.
-
-### The trade-off being tested
-
-A smaller discount earns more on every sale but may sell fewer units. The **break-even sales loss** is how far units can fall before total profit drops. In the Calculator's default example (MRP ₹1,000, discount cut from 40% to 30%), contribution per sale rises from ₹250 to ₹330, so units can fall by up to 24.2% and the brand still earns more.
-
-### Test design
-
-| Part | Design | Why |
-|---|---|---|
-| Shortlist | 50 to 100 candidates from one segment, high-confidence peer groups only, nothing marked "review first"; CSV from the Test candidates tab | Enough products for a clear result, without unusual listings blurring it |
-| Change | The test group moves to its peer median discount; the control group keeps today's discount | The peer median is a level similar products already sell at, so the new price is realistic, not a guess |
-| Split | Shoppers split 50/50 at random; or, if showing two prices for one product isn't acceptable, half the listings in each peer group are test and half control | Every product keeps one price, and the peer groups keep the two halves comparable |
-| Duration | 2 to 4 weeks, outside big sale events | Covers weekday, weekend and payday patterns; a sale would distort both groups |
-| Main metric | Total contribution = units × contribution per unit | Units almost always fall when the discount shrinks; the question is whether profit rises |
-| Guardrails | Return rate, search rank and visibility, customer complaints | A profit gain that damages ranking or customer trust isn't a real win |
-| Win rule | Units fall by less than the break-even sales loss, fixed before the test starts | Fixing the rule in advance stops the result being read the way people hope |
-
-### Reading the result (illustrative numbers)
-
-A brand tests 60 Women's Sneakers listings at their peer median for 3 weeks. Contribution per unit rises from ₹100 to ₹140, so the break-even sales loss is 28.6%.
-
-| Outcome | Units | Total contribution | Decision |
-|---|---:|---:|---|
-| Before | 1,000 | ₹1,00,000 | |
-| Units fall 15% | 850 | ₹1,19,000 (+19%) | Win: roll the smaller discount out to the rest of the peer group |
-| Units fall 35% | 650 | ₹91,000 (−9%) | Loss: keep the old discount; the gap was earning its sales |
-
-The Test results tab does this comparison: enter units and contribution per unit for both groups, and it shows the change against break-even with a win or loss message. Before acting on a small difference, check it's larger than normal week-to-week swings in the control group, or run the test longer.
-
-**Either way the brand learns something:** a win frees margin across similar listings; a loss shows that the discount is what sells those products, which is worth knowing before cutting it anywhere else.
-
-**Status:** designed and ready to run, but not run, because the public data has no sales and I can't change Myntra's prices.
-
-## Data
-
-- **Source:** [Myntra Products Dataset](https://www.kaggle.com/datasets/ronakbokaria/myntra-products-dataset) on Kaggle (`myntra202305041052.csv`, 1.37 GB, 1,060,213 rows).
-- **Snapshot date:** last updated 4 May 2023, so prices are a past snapshot, not today's.
-- **Licence:** CC0 Public Domain.
-- **Kept:** 18,037 listings after removing 237,241 duplicate product IDs, 787,972 rows outside the 5 categories, and 16,963 kids' or unknown-gender rows.
-
-The raw file is not in this repository (it is too big); `data/processed/app.db` is.
-
-## Limits
-
-- **Old snapshot:** prices are from May 2023.
-- **No sales or cost data:** units sold, product cost, marketplace fees and shipping costs are internal business data. Myntra and its brands keep them private, and no public dataset includes them; the catalogue only shows what a shopper sees (MRP, selling price, discount, ratings). So the app can't see whether a higher discount sells more, and contribution uses assumed cost, fee and shipping, which you can change in the sidebar. A brand using the app would replace these assumptions with its own numbers.
-- **Thin ratings:** 12,965 listings (72%) have no rating.
-- **Peer groups come from MRP, ratings and words in the product name only:** no images, fabric details or sales history.
-- **A gap is a reason to test, not proof** of lost margin.
-
 ## Run it locally
 
 ```
@@ -258,6 +250,14 @@ python -m src.candidates
 python -m src.app_tables
 python -m pytest
 ```
+
+## Limits
+
+- **Old snapshot:** prices are from May 2023.
+- **No sales or cost data:** units sold, product cost, marketplace fees and shipping costs are internal business data. Myntra and its brands keep them private, and no public dataset includes them; the catalogue only shows what a shopper sees (MRP, selling price, discount, ratings). So the app can't see whether a higher discount sells more, and contribution uses assumed cost, fee and shipping, which you can change in the sidebar. A brand using the app would replace these assumptions with its own numbers.
+- **Thin ratings:** 12,965 listings (72%) have no rating.
+- **Peer groups come from MRP, ratings and words in the product name only:** no images, fabric details or sales history.
+- **A gap is a reason to test, not proof** of lost margin.
 
 ## Next steps
 
