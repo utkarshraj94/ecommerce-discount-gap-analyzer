@@ -86,6 +86,49 @@ Hover over any chart point for a plain-language explanation, and open **What the
 
 **What the team gets:** a short, ranked, explained list instead of a blanket discount cut; a break-even number agreed before the test; and a clear rule for reading the result.
 
+## Repository structure
+
+```
+ecommerce-discount-gap-analyzer/
+├── app.py                      # Streamlit app: sidebar, cards and the nine tabs
+├── src/
+│   ├── clean.py                # Phase 2: clean the raw CSV, count every removed row
+│   ├── load_db.py              # Phase 3: load the SQLite star schema
+│   ├── check_metrics.py        # Phase 3: SQL queries checked against pandas
+│   ├── features.py             # Phase 4: scaled MRP and ratings, text flags
+│   ├── select_k.py             # Phase 5: try k = 3 to 10 per segment
+│   ├── choose_k.py             #          keep k values that pass the size rules
+│   ├── stability.py            #          5-seed stability check, final k
+│   ├── peer_groups.py          #          KMeans peer groups with their names
+│   ├── profile_groups.py       #          describe each group (for naming)
+│   ├── hdbscan_check.py        #          HDBSCAN comparison
+│   ├── anomalies.py            #          Isolation Forest "review first" flags
+│   ├── business.py             # Phase 6: business rules (gap, contribution, break-even)
+│   ├── gaps.py                 #          peer medians and each listing's gap
+│   ├── candidates.py           #          test candidates and their reasons
+│   ├── hand_check.py           #          10 listings checked by hand
+│   ├── app_tables.py           #          build data/processed/app.db
+│   ├── place_product.py        # Place a new product in its peer group
+│   └── app_tabs/               # Phase 7: one file per tab, plus shared helpers
+├── sql/
+│   ├── schema.sql              # Star schema with CHECK and foreign-key rules
+│   └── metrics.sql             # Reusable queries
+├── tests/
+│   ├── test_business.py        # Business-rule tests
+│   └── test_place_product.py   # New-product placement tests
+├── notebooks/                  # Data audit and cleaning checks
+├── data/
+│   ├── raw/                    # Raw Kaggle CSV (not in Git: 1.37 GB)
+│   └── processed/              # Pipeline outputs; app.db is what the app reads
+├── docs/
+│   ├── Project_report.pdf      # Project report: problem, data, method, results, limits
+│   ├── Discount_Gap_Analyzer_deck.pptx  # Presentation deck
+│   └── images/                 # README screenshots and the workflow diagram
+├── .streamlit/config.toml      # App theme
+├── requirements.txt            # Packages the app needs (Streamlit Cloud)
+└── requirements-dev.txt        # Plus pipeline, tests and notebooks
+```
+
 ## How it works
 
 ```mermaid
@@ -185,49 +228,6 @@ The raw file is not in this repository (it is too big); `data/processed/app.db` 
 - **Thin ratings:** 12,965 listings (72%) have no rating.
 - **Peer groups come from MRP, ratings and words in the product name only:** no images, fabric details or sales history.
 - **A gap is a reason to test, not proof** of lost margin.
-
-## Repository structure
-
-```
-ecommerce-discount-gap-analyzer/
-├── app.py                      # Streamlit app: sidebar, cards and the nine tabs
-├── src/
-│   ├── clean.py                # Phase 2: clean the raw CSV, count every removed row
-│   ├── load_db.py              # Phase 3: load the SQLite star schema
-│   ├── check_metrics.py        # Phase 3: SQL queries checked against pandas
-│   ├── features.py             # Phase 4: scaled MRP and ratings, text flags
-│   ├── select_k.py             # Phase 5: try k = 3 to 10 per segment
-│   ├── choose_k.py             #          keep k values that pass the size rules
-│   ├── stability.py            #          5-seed stability check, final k
-│   ├── peer_groups.py          #          KMeans peer groups with their names
-│   ├── profile_groups.py       #          describe each group (for naming)
-│   ├── hdbscan_check.py        #          HDBSCAN comparison
-│   ├── anomalies.py            #          Isolation Forest "review first" flags
-│   ├── business.py             # Phase 6: business rules (gap, contribution, break-even)
-│   ├── gaps.py                 #          peer medians and each listing's gap
-│   ├── candidates.py           #          test candidates and their reasons
-│   ├── hand_check.py           #          10 listings checked by hand
-│   ├── app_tables.py           #          build data/processed/app.db
-│   ├── place_product.py        # Place a new product in its peer group
-│   └── app_tabs/               # Phase 7: one file per tab, plus shared helpers
-├── sql/
-│   ├── schema.sql              # Star schema with CHECK and foreign-key rules
-│   └── metrics.sql             # Reusable queries
-├── tests/
-│   ├── test_business.py        # Business-rule tests
-│   └── test_place_product.py   # New-product placement tests
-├── notebooks/                  # Data audit and cleaning checks
-├── data/
-│   ├── raw/                    # Raw Kaggle CSV (not in Git: 1.37 GB)
-│   └── processed/              # Pipeline outputs; app.db is what the app reads
-├── docs/
-│   ├── Project_report.pdf      # Project report: problem, data, method, results, limits
-│   ├── Discount_Gap_Analyzer_deck.pptx  # Presentation deck
-│   └── images/                 # README screenshots and the workflow diagram
-├── .streamlit/config.toml      # App theme
-├── requirements.txt            # Packages the app needs (Streamlit Cloud)
-└── requirements-dev.txt        # Plus pipeline, tests and notebooks
-```
 
 ## Run it locally
 
